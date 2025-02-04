@@ -27,7 +27,7 @@ module.exports = {
     [
       'jest-html-reporter',
       {
-        outputPath: './reports/jest-front-html-report.html',  // Path for HTML report
+        outputPath: './reports/jest-frontend-html-report.html',  // Path for HTML report
         pageTitle: "Jest Frontend HTML Test Report",
         includeFailureMsg: true,
         includeSuiteFailure: true
