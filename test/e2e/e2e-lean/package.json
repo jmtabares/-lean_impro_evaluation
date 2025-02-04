@@ -1,0 +1,32 @@
+{
+  "name": "e2e-lean",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "cy:chrome": "cypress run --browser chrome",
+    "cy:chrome:video": "cypress run  --browser chrome --reporter cypress-mochawesome-reporter",
+    "format": "prettier --ignore-unknown --write --cache .",
+    "lint": "eslint --cache . --max-warnings 8"
+  },
+  "author": "",
+  "license": "ISC",
+  "keywords": [],
+  "description": "",
+  "devDependencies": {
+    "@badeball/cypress-cucumber-preprocessor": "^22.0.0",
+    "@bahmutov/cypress-esbuild-preprocessor": "^2.2.4",
+    "@typescript-eslint/eslint-plugin": "^8.22.0",
+    "@typescript-eslint/parser": "^8.22.0",
+    "cypress": "^14.0.1",
+    "cypress-mochawesome-reporter": "^3.8.2",
+    "cypress-multi-reporters": "^2.0.5",
+    "esbuild": "^0.24.2",
+    "eslint": "^9.19.0",
+    "eslint-config-prettier": "^10.0.1",
+    "eslint-plugin-cypress": "^4.1.0",
+    "mocha-junit-reporter": "^2.2.1",
+    "prettier": "3.4.2",
+    "typescript": "^5.7.3"
+  }
+}

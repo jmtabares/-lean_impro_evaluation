@@ -1,0 +1,8 @@
+reports
+.env
+.eslintcache
+node_modules/
+# Build files
+dist/
+build/
+*.log

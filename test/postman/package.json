@@ -1,0 +1,24 @@
+{
+    "name": "api-project",
+    "version": "1.0.0",
+    "description": "Node backend with Newman for API testing",
+    "main": "index.js",
+    "scripts": {
+        "start": "node index.js",
+        "dev": "nodemon index.js",
+        "test:unit": "jest",
+        "test:postman:lean-improvements": "newman run LeanImprovements.postman_collection.json -e LeanImprovements.postman_environment.json --reporters cli,htmlextra --reporter-htmlextra-export reports/LeanImprovements.html",
+        "test:postman:load-test": "newman run LeanSimpleLoadTest.postman_collection.json -e LeanImprovements.postman_environment.json -n 100 --reporters cli,htmlextra --reporter-htmlextra-export reports/LeanSimpleLoadTest.html"
+    },
+    "dependencies": {
+        "express": "^4.18.2"
+    },
+    "devDependencies": {
+        "jest": "^29.0.0",
+        "newman": "^6.2.1",
+        "newman-reporter-htmlextra": "^1.23.1",
+        "newman-reporter-junitfull": "^1.1.1",
+        "supertest": "^6.2.4",
+        "xml2js": "^0.6.2"
+    }
+}

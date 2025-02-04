@@ -1,0 +1,177 @@
+trigger:
+  - main
+  - develop
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  - group: test
+  - name: FRONTEND_URL
+    value: 'http://localhost:5173'
+  - name: BACKEND_URL
+    value: 'http://localhost:3001'
+  - name: POSTMAN_ENV
+    value: 'tests/postman/LeanImprovements.postman_environment.json'
+  - name: REPORTS_DIR
+    value: '$(System.DefaultWorkingDirectory)/reports'
+
+steps:
+  # Use the latest Node.js version
+  - task: NodeTool@0
+    inputs:
+      versionSpec: '>=18'  # Fetch the latest available version of Node.js
+    displayName: 'Use Latest Node.js Version'
+
+  # Install frontend dependencies (only if cache is not restored)
+  - script: |
+      echo "Installing frontend dependencies..."
+      cd frontend
+      npm install
+    displayName: 'Install Frontend Dependencies'
+
+  # Install backend dependencies (only if cache is not restored)
+  - script: |
+      echo "Installing backend dependencies..."
+      cd backend
+      npm install
+    displayName: 'Install Backend Dependencies'
+
+  # Run Frontend Unit Tests (Jest) - Continue if they fail
+  - script: |
+      echo "Running frontend unit tests with Jest..."
+      cd frontend
+      npm run test -- --coverage
+      ls reports/test-results.xml || echo "No test results found in frontend"
+    displayName: 'Run Frontend Unit Tests with Jest'
+    continueOnError: true
+
+  # Run Backend Unit Tests (Jest + Supertest) - Continue if they fail
+  - script: |
+      echo "Running backend unit tests with Jest and Supertest..."
+      cd backend
+      npm run test -- --coverage
+      ls reports/test-results.xml || echo "No test results found in backend"
+    displayName: 'Run Backend Unit Tests with Jest'
+    continueOnError: true
+ 
+  # Start Backend App (Node-Express on port 3001)
+  - script: |
+      echo "Starting backend service on port 3001..."
+      nohup npm run dev > backend.log 2>&1 &
+      echo $! > ../backend.pid
+    workingDirectory: backend
+    displayName: 'Start Backend Service'
+
+  - script: |
+      echo "Building frontend with correct base path..."
+      cd frontend
+      npm install
+      npm run build
+    displayName: 'Build Frontend App'
+
+  - script: |
+      echo "Serving frontend production build on 0.0.0.0..."
+      cd frontend
+      npx serve -s dist --listen 5173 > frontend.log 2>&1 &
+      sleep 10  # Wait for the server to start
+      cat frontend.log
+    displayName: 'Serve Frontend Production Build'
+
+  - script: |
+      echo "Checking if backend is running on localhost:3001..."
+      curl -I http://localhost:3001 || (echo "Backend not reachable" && exit 1)
+
+      echo "Checking if frontend is running on localhost:5173..."
+      curl -I http://localhost:5173 || (echo "Frontend not reachable" && exit 1)
+    displayName: 'Verify Local Services Are Running'
+
+    # Run Cypress E2E Tests 
+  - script: |
+      echo "Running Cypress E2E tests on $FRONTEND_URL... "
+      cd test/e2e/e2e-lean
+      npm install
+      npx cypress run --env baseUrl=$(FRONTEND_URL) --reporter junit --reporter-options reportDir=../../${REPORTS_DIR}/e2e-reports
+    displayName: 'Run Cypress E2E Tests'
+    continueOnError: true
+  
+  # Install Newman Dependencies
+  - script: |
+      echo "Installing Newman Dependencies..."
+      cd test/postman
+      npm install
+      rm -rf newman/*
+    displayName: 'Install Newman Dependencies'  
+
+  # Run Postman Collection 1: LeanImprovements (1 iteration)
+  - script: |
+      echo "Running LeanImprovements Postman collection..."
+      cd test/postman
+      npx newman run LeanImprovements.postman_collection.json -e LeanImprovements.postman_environment.json  --iteration-count 1 --reporters cli,htmlextra,junitfull --env-var "base_url=$(BACKEND_URL)"
+    displayName: 'Run LeanImprovements Postman Collection (1 Iteration)'
+
+  # Run Postman Collection 2: LeanSimpleLoadTest (100 iterations)
+  - script: |
+      echo "Running LeanSimpleLoadTest Postman collection with 100 iterations..."
+      cd test/postman
+      npx newman run LeanSimpleLoadTest.postman_collection.json -e LeanImprovements.postman_environment.json  --iteration-count 100 --reporters cli,htmlextra,junitfull --env-var "base_url=$(BACKEND_URL)"
+    displayName: 'Run LeanSimpleLoadTest Postman Collection (100 Iterations)'
+
+ # Wait for test result files to be written
+  - script: sleep 5
+    displayName: 'Wait for Test Result Files'
+
+  # Publish Unit Test Results
+  - task: PublishTestResults@2
+    inputs:
+      testResultsFormat: 'JUnit'
+      testResultsFiles: '**/reports/test-results.xml'
+      testRunTitle: 'Unit Test Results'
+      mergeTestResults: true
+
+  # Publish Cypress Test Results
+  - task: PublishTestResults@2
+    inputs:
+      testResultsFormat: 'JUnit'
+      testResultsFiles: '**/cypress/reports/*.xml'
+      testRunTitle: 'Cypress Test Results'
+      mergeTestResults: true 
+     
+    # Publish Postman Test Results
+  - task: PublishTestResults@2
+    inputs:
+      testResultsFormat: 'JUnit'
+      testResultsFiles: '**/newman/*.xml'
+      testRunTitle: 'Postman Test Results'
+      mergeTestResults: false  
+
+  # Publish Postman HTML reports
+  - task: PublishPipelineArtifact@1
+    inputs:
+      targetPath: '$(System.DefaultWorkingDirectory)/test/postman/newman'
+      artifactName: 'PostmanHTMLReports'
+    continueOnError: true      
+  # Publish Cypress E2E reports
+  - task: PublishPipelineArtifact@1
+    inputs:
+      targetPath: '$(System.DefaultWorkingDirectory)/test/e2e/e2e-lean/cypress/reports'
+      artifactName: 'CypressE2EReports'
+    continueOnError: true
+  # Archive Cypress videos and screenshots for debugging
+  - task: PublishPipelineArtifact@1
+    inputs:
+      targetPath: '$(System.DefaultWorkingDirectory)/test/e2e/e2e-lean/cypress/reports/videos'
+      artifactName: 'CypressVideos'
+    continueOnError: true
+  - task: PublishPipelineArtifact@1
+    inputs:
+      targetPath: '$(System.DefaultWorkingDirectory)/test/e2e/e2e-lean/cypress/reports/screenshots'
+      artifactName: 'CypressScreenshots'
+    continueOnError: true  
+
+  # Stop the backend and frontend services
+  - script: |
+      echo "Stopping backend and frontend services..."
+      kill $(cat backend.pid) || echo "Backend process already stopped"
+      kill $(cat frontend.pid) || echo "Frontend process already stopped"
+    displayName: 'Stop Backend and Frontend Services'    

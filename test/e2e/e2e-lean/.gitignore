@@ -1,0 +1,10 @@
+node_modules/
+cypress/reports
+cypress/screenshots
+cypress/videos
+coverage
+.nyc_output
+.DS_Store
+.env
+.eslintcache
+env-presets
