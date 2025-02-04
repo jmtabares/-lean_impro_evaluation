@@ -148,17 +148,17 @@ steps:
   # Publish the Jest HTML report for backend
   - task: PublishPipelineArtifact@1
     inputs:
-      targetPath: '**/reports/jest-backend-html-report.html'
+      targetPath: '$(System.DefaultWorkingDirectory)/backend/reports/jest-backend-html-report.html'
       artifactName: 'JestHTMLReport'
     displayName: 'Publish Jest Backend HTML Report'
 
   # Publish the Jest HTML report for frontend
   - task: PublishPipelineArtifact@1
     inputs:
-      targetPath: '**/reports/jest-frontend-html-report.html'
+      targetPath: '$(System.DefaultWorkingDirectory)/frontend/reports/jest-frontend-html-report.html'
       artifactName: 'JestHTMLReport'
     displayName: 'Publish Jest Frontend HTML Report' 
-       
+
   # Publish Postman HTML reports
   - task: PublishPipelineArtifact@1
     inputs:
