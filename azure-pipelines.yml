@@ -137,7 +137,7 @@ steps:
       testRunTitle: 'Cypress Test Results'
       mergeTestResults: true 
      
-    # Publish Postman Test Results
+  # Publish Postman Test Results
   - task: PublishTestResults@2
     inputs:
       testResultsFormat: 'JUnit'
@@ -145,6 +145,20 @@ steps:
       testRunTitle: 'Postman Test Results'
       mergeTestResults: false  
 
+  # Publish the Jest HTML report for backend
+  - task: PublishPipelineArtifact@1
+    inputs:
+      targetPath: '**/reports/jest-backend-html-report.html'
+      artifactName: 'JestHTMLReport'
+    displayName: 'Publish Jest Backend HTML Report'
+
+  # Publish the Jest HTML report for frontend
+  - task: PublishPipelineArtifact@1
+    inputs:
+      targetPath: '**/reports/jest-frontend-html-report.html'
+      artifactName: 'JestHTMLReport'
+    displayName: 'Publish Jest Frontend HTML Report' 
+       
   # Publish Postman HTML reports
   - task: PublishPipelineArtifact@1
     inputs:

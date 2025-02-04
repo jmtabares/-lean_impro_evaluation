@@ -23,6 +23,15 @@ module.exports = {
         includeFailureMsg: true,
         includeSuiteFailure: true
       }
+    ],
+    [
+      'jest-html-reporter',
+      {
+        outputPath: './reports/jest-front-html-report.html',  // Path for HTML report
+        pageTitle: "Jest Frontend HTML Test Report",
+        includeFailureMsg: true,
+        includeSuiteFailure: true
+      }
     ]
   ]
 };
