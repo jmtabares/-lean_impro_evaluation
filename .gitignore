@@ -19,3 +19,4 @@ reports/
 newman/
 *.log
 ngrok-tunnels.json
+.DS_Store
